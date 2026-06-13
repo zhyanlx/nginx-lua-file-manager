@@ -18,7 +18,6 @@
 <img width="2548" height="967" alt="image" src="https://github.com/user-attachments/assets/38dc9ccc-8ca3-4310-b89a-fe06fc34b8d1" />
 <img width="1063" height="911" alt="image" src="https://github.com/user-attachments/assets/849cb24b-8ab4-4ac2-9ec2-3daadc05755b" />
 <img width="1097" height="832" alt="image" src="https://github.com/user-attachments/assets/1ba62269-847c-4a21-a8f9-68408ca71422" />
-<img width="1098" height="806" alt="image" src="https://github.com/user-attachments/assets/820810cc-a311-4e30-9791-64840e7f7163" />
 
 ## 文件说明
 
