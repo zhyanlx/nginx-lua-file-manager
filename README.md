@@ -14,6 +14,13 @@
 - 大文件分片上传
 - 居中提示弹框
 
+## 页面预览
+<img width="2548" height="967" alt="image" src="https://github.com/user-attachments/assets/38dc9ccc-8ca3-4310-b89a-fe06fc34b8d1" />
+<img width="2560" height="983" alt="image" src="https://github.com/user-attachments/assets/8e2cca4c-e87e-46c1-aaeb-acee096c5c7d" />
+<img width="2509" height="987" alt="image" src="https://github.com/user-attachments/assets/c7905db1-7cc0-411a-85fb-8571b1a02065" />
+<img width="2516" height="857" alt="image" src="https://github.com/user-attachments/assets/2a52e684-8914-4ce6-913f-9256bc7f2401" />
+
+
 ## 文件说明
 
 ```text
@@ -32,11 +39,7 @@ README.md    # 使用说明
 local BASE_DIR = "/opt/www/download"
 ```
 
-把它改成你的实际文件目录，例如：
-
-```lua
-local BASE_DIR = "/data/download"
-```
+把它改成你的实际文件目录
 
 Nginx/OpenResty 配置里的 `root` 也要和这个目录一致。
 
@@ -48,11 +51,7 @@ Nginx/OpenResty 配置里的 `root` 也要和这个目录一致。
 local PASSWORD = "change-me"
 ```
 
-请改成你自己的密码，并确保两个文件保持一致：
-
-```lua
-local PASSWORD = "your-password"
-```
+change-me改成你自己的密码，并确保两个文件保持一致。
 
 > 不要把真实密码提交到公开仓库。
 
@@ -100,12 +99,6 @@ server {
 }
 ```
 
-如果主配置没有加载 vhost 目录，需要在 `http {}` 中加入：
-
-```nginx
-include /usr/local/openresty/nginx/conf/vhost/*.conf;
-```
-
 ## 部署步骤
 
 以下以 `/opt/www/download` 为例。
@@ -147,20 +140,7 @@ sudo find /opt/www/download -type d -exec chmod 755 {} \;
 sudo find /opt/www/download -type f -exec chmod 644 {} \;
 ```
 
-如果你只想临时放开目录写权限，也可以：
-
-```bash
-sudo find /opt/www/download -type d -exec chmod 757 {} \;
-```
-
 ### 4. 测试并重载 OpenResty
-
-```bash
-sudo /usr/local/openresty/nginx/sbin/nginx -t
-sudo /usr/local/openresty/nginx/sbin/nginx -s reload
-```
-
-如果你使用系统 Nginx：
 
 ```bash
 sudo nginx -t
@@ -174,40 +154,3 @@ sudo systemctl reload nginx
 3. 输入 `PASSWORD` 中配置的密码。
 4. 登录后可以上传、新建目录、删除、批量删除、移动文件。
 
-## 常见问题
-
-### 修改 Lua 后页面没有变化
-
-重载 OpenResty，并强制刷新浏览器：
-
-```bash
-sudo /usr/local/openresty/nginx/sbin/nginx -s reload
-```
-
-浏览器强刷：
-
-- Windows/Linux：`Ctrl + F5`
-- macOS：`Cmd + Shift + R`
-
-### 新建、删除、移动、上传失败
-
-通常是目录权限问题。确认 OpenResty/Nginx worker 用户对 `BASE_DIR` 有写权限。
-
-### 上传大文件失败
-
-检查：
-
-- `client_max_body_size` 是否足够大
-- `UPLOAD_TEMP` 所在磁盘空间是否足够
-- worker 用户是否有 `UPLOAD_TEMP` 写权限
-
-## 安全提醒
-
-- 必须修改默认密码 `change-me`
-- 不要把真实密码提交到公开仓库
-- 公网部署建议使用 HTTPS
-- 上传、删除、移动是高权限操作，建议仅在个人服务器或内网环境使用
-
-## License
-
-请根据你的开源计划自行补充许可证。
