@@ -7,6 +7,19 @@ os.execute("mkdir -p " .. UPLOAD_TEMP .. " 2>/dev/null")
 ngx.req.read_body()
 local body = ngx.req.get_body_data()
 
+-- 大分片上传时，nginx/OpenResty 可能把 request body 写入临时文件，
+-- 此时 get_body_data() 返回 nil，需要从 get_body_file() 读取。
+if not body then
+    local body_file = ngx.req.get_body_file()
+    if body_file then
+        local f = io.open(body_file, "rb")
+        if f then
+            body = f:read("*a")
+            f:close()
+        end
+    end
+end
+
 if not body then
     ngx.say('{"success":false,"message":"无数据"}')
     return
@@ -55,7 +68,11 @@ for _, part in ipairs(parts) do
         params[part.name] = part.content
     end
     if part.filename then
-        params["filename"] = part.filename
+        -- 分片上传时前端 file.slice() 产生 Blob，浏览器默认 multipart filename 可能是 "blob"。
+        -- 不要让这个默认名覆盖前面显式传入的真实 filename 字段。
+        if not params["filename"] or params["filename"] == "" then
+            params["filename"] = part.filename
+        end
         params["file_data"] = part.content
     end
 end

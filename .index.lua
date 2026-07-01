@@ -281,8 +281,13 @@ end
 f:close()
 local testdir = io.open(fp .. "/", "r")
 if testdir then testdir:close() else
-    ngx.req.set_uri("/__static__" .. path)
-    ngx.exec("/__static__" .. path)
+    local ext = path:match("%.([^%.%/]+)$")
+    ext = ext and ext:lower() or ""
+    if ext == "mp4" and ngx.var.arg_play ~= "1" then
+        ngx.exec("/__static_download__" .. path)
+    else
+        ngx.exec("/__static__" .. path)
+    end
     return
 end
 
@@ -411,6 +416,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .row-wrap{display:flex;align-items:center}
 .row-check-wrap{display:none;align-items:center;padding:0 8px 0 12px;cursor:pointer}
 .row-wrap .row{flex:1;border-radius:0}
+.play-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;text-decoration:none;font-size:13px;cursor:pointer;padding:6px 14px;border-radius:8px;flex-shrink:0;align-self:center;transition:all .2s;margin-right:8px;font-weight:500}
+.play-btn:hover{background:#dbeafe;color:#1d4ed8}
 .del-btn{display:none;color:#ef4444;background:none;border:none;font-size:13px;cursor:pointer;padding:6px 14px;border-radius:8px;flex-shrink:0;align-self:center;transition:all .2s}
 .del-btn:hover{background:#fef2f2;color:#dc2626}
 .search-box{padding:12px 20px;border-bottom:1px solid #f0f0f0;background:#fafbfc}
@@ -468,10 +475,13 @@ else
         local sz = format_size(e.size)
         local inf = e.is_dir and '<div class="sz">'..sz..'</div>' or '<div class="sz">'..(sz == "" and "未知大小" or sz)..'</div>'
         local arr = e.is_dir and '<span class="arr">›</span>' or ''
+        local ext = e.name:match("%.([^%.]+)$")
+        ext = ext and ext:lower() or ""
+        local play_btn = (not e.is_dir and ext == "mp4") and '<a class="play-btn" href="'..e.name..'?play=1" onclick="event.stopPropagation()">▶ 播放</a>' or ''
         local row_del = '<button class="del-btn" onclick="event.stopPropagation();event.preventDefault();delItem(\''..e.name..'\',\''..(e.is_dir and 'dir' or 'file')..'\')">删除</button>'
         local size_attr = e.size ~= "" and ' data-size="'..e.size..'"' or ' data-size="0"'
         local checkbox = '<input type="checkbox" class="row-check" data-name="'..e.name..'" data-type="'..(e.is_dir and 'dir' or 'file')..'" onclick="event.stopPropagation();updateSelection()">'
-        html = html..'<div class="row-wrap" data-name="'..e.name:lower()..'"'..size_attr..'><label class="row-check-wrap">'..checkbox..'</label><a class="row" href="'..e.name..(e.is_dir and '/' or '')..'"><div class="ico '..cls..'">'..ic..'</div><div class="nfo"><div class="nm">'..e.name..'</div>'..inf..'</div>'..arr..'</a>'..row_del..'</div>'
+        html = html..'<div class="row-wrap" data-name="'..e.name:lower()..'"'..size_attr..'><label class="row-check-wrap">'..checkbox..'</label><a class="row" href="'..e.name..(e.is_dir and '/' or '')..'"><div class="ico '..cls..'">'..ic..'</div><div class="nfo"><div class="nm">'..e.name..'</div>'..inf..'</div>'..arr..'</a>'..play_btn..row_del..'</div>'
     end
 end
 html = html..[[</div></div>
@@ -598,7 +608,7 @@ function uploadNext(){if(!uploading)return;
 while(currentChunk<totalChunks&&uploadedChunks.indexOf(currentChunk)!==-1){currentChunk++}
 if(currentChunk>=totalChunks){mergeChunks();return}
 var start=currentChunk*CHUNK_SIZE;var end=Math.min(start+CHUNK_SIZE,file.size);var chunk=file.slice(start,end);
-var formData=new FormData();formData.append('action','chunk');formData.append('file_id',fileId);formData.append('chunk_index',currentChunk);formData.append('total_chunks',totalChunks);formData.append('filename',file.name);formData.append('path',path);formData.append('password',pwd);formData.append('file',chunk);
+var formData=new FormData();formData.append('action','chunk');formData.append('file_id',fileId);formData.append('chunk_index',currentChunk);formData.append('total_chunks',totalChunks);formData.append('filename',file.name);formData.append('path',path);formData.append('password',pwd);formData.append('file',chunk,file.name);
 var xhr=new XMLHttpRequest();xhr.open('POST','/__upload__',true);uploadAbort=function(){xhr.abort();uploading=false};
 var pct=Math.round((currentChunk/totalChunks)*100);document.getElementById('progressFill').style.width=pct+'%';document.getElementById('uploadStatus').textContent='上传中 '+pct+'% ('+(currentChunk+1)+'/'+totalChunks+')';
 xhr.onload=function(){if(xhr.responseText){try{var r=JSON.parse(xhr.responseText);if(r.success){currentChunk++;uploadNext()}else{uploading=false;showAlert(r.message||'上传失败')}}catch(e){uploading=false;showAlert('上传失败')}}};xhr.onerror=function(){uploading=false;showAlert('网络错误，可重新上传继续')};xhr.send(formData)}
